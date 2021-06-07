@@ -1,0 +1,205 @@
+C51 COMPILER V9.59.0.0   SOFTUART                                                          02/05/2020 20:06:00 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE SOFTUART
+OBJECT MODULE PLACED IN softuart.OBJ
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE softuart.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include "stc15.h"
+   2          #include "softuart.h"
+   3          
+   4          
+   5          #define BAUD  0xFD00                  // 9600bps @ 22.1184MHz
+   6          
+   7          int uart2datacount=0;
+   8          char bittest1;
+   9          int s=0;
+  10          
+  11          
+  12          
+  13          #define RXB P30                        //define UART TX/RX port
+  14          #define TXB P31
+  15          
+  16          typedef bit BOOL;
+  17          typedef unsigned char BYTE;
+  18          typedef unsigned int WORD;
+  19          
+  20          BYTE TBUF,RBUF;
+  21          BYTE TDAT,RDAT;
+  22          BYTE TCNT,RCNT;
+  23          BYTE TBIT,RBIT;
+  24          BOOL TING,RING;
+  25          BOOL TEND,REND;
+  26          
+  27          void UART_INIT();
+  28          
+  29          BYTE t, r;
+  30          
+  31          
+  32          //core
+  33          
+  34          //extern BYTE bufrx[5];                         //core
+  35          extern BYTE bufrxl[30];                         //core
+  36          //extern BYTE buftx[30];                         //core
+  37          
+  38          
+  39          
+  40          void UART_INIT()
+  41          {
+  42   1          TING = 0;
+  43   1          RING = 0;
+  44   1          TEND = 1;
+  45   1          REND = 0;
+  46   1          TCNT = 0;
+  47   1          RCNT = 0;
+  48   1      }
+  49          
+  50          
+  51          
+  52          void softuart_init()
+  53          {
+  54   1          TMOD = 0x00;                        //timer0 in 16-bit auto reload mode
+  55   1          AUXR = 0x80;                        //timer0 working at 1T mode
+C51 COMPILER V9.59.0.0   SOFTUART                                                          02/05/2020 20:06:00 PAGE 2   
+
+  56   1          TL0 = BAUD;
+  57   1          TH0 = BAUD>>8;                      //initial timer0 and set reload value
+  58   1          TR0 = 1;                            //tiemr0 start running
+  59   1          ET0 = 1;                            //enable timer0 interrupt
+  60   1          PT0 = 1;                            //improve timer0 interrupt priority
+  61   1          EA = 1;                             //open global interrupt switch
+  62   1      
+  63   1          UART_INIT();
+  64   1      } 
+  65          void softuart()
+  66              {          
+  67   1                                          //user's function
+  68   1              if (REND)
+  69   1              {
+  70   2                  REND = 0;
+  71   2                  bittest1=RBUF;
+  72   2              //    bufrx[r++ & 0x05] = RBUF;     //where to RX the data;
+  73   2                          
+  74   2                if(bittest1!='\n')
+  75   2            {
+  76   3            bufrxl[uart2datacount]=bittest1;
+  77   3              uart2datacount++;
+  78   3              r=1;
+  79   3            }
+  80   2              else
+  81   2              {
+  82   3              uart2datacount=0;
+  83   3              }
+  84   2                
+  85   2            
+  86   2              }
+  87   1         //     if (TEND)
+  88   1          //    {
+  89   1                //  if (t != r)
+  90   1                //  {
+  91   1                //      TEND = 0;
+  92   1               //     TBUF = bufrxl[t++ & 0x05];  //where to TX the data;
+  93   1              //      for(s=0;s<=4;s++)
+  94   1              //        TBUF = bufrxl[s];
+  95   1               //       TING = 1;
+  96   1                //  }
+  97   1          //    } 
+  98   1          }
+  99              
+ 100              
+ 101          void softuart_tx()
+ 102          {
+ 103   1      if (TEND)
+ 104   1              {
+ 105   2                if(r==1&&s<=4)
+ 106   2                {     
+ 107   3                      TEND = 0;
+ 108   3                      TBUF = bufrxl[s];
+ 109   3                      TING = 1;
+ 110   3                      s++;
+ 111   3                }
+ 112   2                if(s>4)
+ 113   2                {
+ 114   3                r=0;
+ 115   3                s=0;  
+ 116   3                }
+ 117   2              }
+C51 COMPILER V9.59.0.0   SOFTUART                                                          02/05/2020 20:06:00 PAGE 3   
+
+ 118   1      }
+ 119          
+ 120          
+ 121          void tm0() interrupt 1
+ 122          {
+ 123   1          if (RING)
+ 124   1          {
+ 125   2              if (--RCNT == 0)
+ 126   2              {
+ 127   3                  RCNT = 3;                   //reset send baudrate counter
+ 128   3                  if (--RBIT == 0)
+ 129   3                  {
+ 130   4                      RBUF = RDAT;            //save the data to RBUF
+ 131   4                      RING = 0;               //stop receive
+ 132   4                      REND = 1;               //set receive completed flag
+ 133   4                  }
+ 134   3                  else
+ 135   3                  {
+ 136   4                      RDAT >>= 1;
+ 137   4                      if (RXB) RDAT |= 0x80;  //shift RX data to RX buffer
+ 138   4                  }
+ 139   3              }
+ 140   2          }
+ 141   1          else if (!RXB)
+ 142   1          {
+ 143   2              RING = 1;                       //set start receive flag
+ 144   2              RCNT = 4;                       //initial receive baudrate counter
+ 145   2              RBIT = 9;                       //initial receive bit number (8 data bits + 1 stop bit)
+ 146   2          }
+ 147   1      
+ 148   1          if (--TCNT == 0)
+ 149   1          {
+ 150   2              TCNT = 3;                       //reset send baudrate counter
+ 151   2              if (TING)                       //judge whether sending
+ 152   2              {
+ 153   3                  if (TBIT == 0)
+ 154   3                  {
+ 155   4                      TXB = 0;                //send start bit
+ 156   4                      TDAT = TBUF;            //load data from TBUF to TDAT
+ 157   4                      TBIT = 9;               //initial send bit number (8 data bits + 1 stop bit)
+ 158   4                  }
+ 159   3                  else
+ 160   3                  {
+ 161   4                      TDAT >>= 1;             //shift data to CY
+ 162   4                      if (--TBIT == 0)
+ 163   4                      {
+ 164   5                          TXB = 1;
+ 165   5                          TING = 0;           //stop send
+ 166   5                          TEND = 1;           //set send completed flag
+ 167   5                      }
+ 168   4                      else
+ 169   4                      {
+ 170   5                          TXB = CY;           //write CY to TX port
+ 171   5                      }
+ 172   4                  }
+ 173   3              }
+ 174   2          }
+ 175   1      }
+ 176          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+C51 COMPILER V9.59.0.0   SOFTUART                                                          02/05/2020 20:06:00 PAGE 4   
+
+   CODE SIZE        =    247    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     15    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      4    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

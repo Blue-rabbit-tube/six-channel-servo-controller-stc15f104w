@@ -1,0 +1,1 @@
+int translate(unsigned char mdsb);

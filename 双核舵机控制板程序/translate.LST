@@ -1,0 +1,48 @@
+C51 COMPILER V9.59.0.0   TRANSLATE                                                         02/05/2020 20:06:00 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE TRANSLATE
+OBJECT MODULE PLACED IN translate.OBJ
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE translate.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          int translate(unsigned char mdsb)
+   2          {
+   3   1      unsigned int mdsbint;
+   4   1      if(mdsb=='0')
+   5   1         mdsbint=0;
+   6   1      if(mdsb=='1')
+   7   1         mdsbint=1;
+   8   1      if(mdsb=='2')
+   9   1         mdsbint=2;
+  10   1      if(mdsb=='3')
+  11   1         mdsbint=3;
+  12   1      if(mdsb=='4')
+  13   1         mdsbint=4;
+  14   1      if(mdsb=='5')
+  15   1         mdsbint=5;
+  16   1      if(mdsb=='6')
+  17   1         mdsbint=6;
+  18   1      if(mdsb=='7')
+  19   1         mdsbint=7;
+  20   1      if(mdsb=='8')
+  21   1         mdsbint=8;
+  22   1      if(mdsb=='9')
+  23   1         mdsbint=9;
+  24   1      return mdsbint;
+  25   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     74    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

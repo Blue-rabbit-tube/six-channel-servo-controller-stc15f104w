@@ -1,0 +1,190 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              02/05/2020 20:05:59 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include "stc15.h" 
+   2          #include "softuart.h"
+   3          #include "translate.h"
+   4          // 9600bps @ 22.1184MHz
+   5          
+   6          typedef bit BOOL;
+   7          typedef unsigned char BYTE;
+   8          typedef unsigned int WORD;
+   9          
+  10          unsigned int ds=0;
+  11          unsigned int i=0;
+  12          unsigned int lowms=0;
+  13          unsigned int set=0;               
+  14          unsigned int sevr[3]={90,90,90};
+  15          unsigned int origindata[14];
+  16          
+  17          //BYTE bufrx[5];   
+  18          //BYTE buftx[5];   
+  19          BYTE bufrxl[30];                         //core
+  20          
+  21          unsigned int mode=2;                  //select the core chip 1 or 2
+  22          unsigned int bufnm;
+  23          
+  24          
+  25          void init()                   //init the timer1/2 and I/O 
+  26          {
+  27   1      softuart_init();    
+  28   1      T2L = 0xea;                   //定时器2  ablout 1us a period 
+  29   1      T2H = 0xff; 
+  30   1      AUXR |= 0x10;  
+  31   1      IE2 |= 0x04; 
+  32   1      EA=1; 
+  33   1                       
+  34   1      P35=1;                //io_init set
+  35   1      P32=0;
+  36   1      P33=0;
+  37   1      P34=0;
+  38   1      
+  39   1      }
+  40          
+  41          
+  42          void main()
+  43          {
+  44   1      init();
+  45   1      while(1)
+  46   1      {
+  47   2      softuart();
+  48   2      softuart_tx();
+  49   2      if(mode==1)
+  50   2      {
+  51   3      for(bufnm=0;bufnm<=25;bufnm++)
+  52   3      {
+  53   4      if(bufrxl[bufnm]=='s')
+  54   4      {
+  55   5        
+C51 COMPILER V9.59.0.0   MAIN                                                              02/05/2020 20:05:59 PAGE 2   
+
+  56   5        
+  57   5      if(bufrxl[bufnm+1]=='1')
+  58   5      { 
+  59   6        sevr[0]=translate(bufrxl[bufnm+2])*100+translate(bufrxl[bufnm+3])*10+translate(bufrxl[bufnm+4]);
+  60   6      }
+  61   5      if(bufrxl[bufnm+1]=='2')
+  62   5      {
+  63   6        sevr[1]=translate(bufrxl[bufnm+2])*100+translate(bufrxl[bufnm+3])*10+translate(bufrxl[bufnm+4]);
+  64   6      }
+  65   5      if(bufrxl[bufnm+1]=='3')
+  66   5      {
+  67   6        sevr[2]=translate(bufrxl[bufnm+2])*100+translate(bufrxl[bufnm+3])*10+translate(bufrxl[bufnm+4]);
+  68   6      }
+  69   5      
+  70   5      
+  71   5      }
+  72   4      }
+  73   3      }
+  74   2        
+  75   2      
+  76   2      
+  77   2      if(mode==2)
+  78   2      {
+  79   3      for(bufnm=0;bufnm<=4;bufnm++)
+  80   3      {
+  81   4      if(bufrxl[bufnm]=='s')
+  82   4      {
+  83   5      if(bufrxl[bufnm+1]=='4')
+  84   5      {
+  85   6        sevr[0]=translate(bufrxl[bufnm+2])*100+translate(bufrxl[bufnm+3])*10+translate(bufrxl[bufnm+4]);
+  86   6      }
+  87   5      if(bufrxl[bufnm+1]=='5')
+  88   5      {
+  89   6        sevr[1]=translate(bufrxl[bufnm+2])*100+translate(bufrxl[bufnm+3])*10+translate(bufrxl[bufnm+4]);
+  90   6      }
+  91   5      if(bufrxl[bufnm+1]=='6')
+  92   5      {
+  93   6        sevr[2]=translate(bufrxl[bufnm+2])*100+translate(bufrxl[bufnm+3])*10+translate(bufrxl[bufnm+4]);
+  94   6      }
+  95   5      }
+  96   4      }
+  97   3      }
+  98   2      
+  99   2      
+ 100   2      
+ 101   2      
+ 102   2      
+ 103   2      
+ 104   2        
+ 105   2        
+ 106   2      }
+ 107   1      }
+ 108          
+ 109          
+ 110          void high() interrupt 12  //定时器2
+ 111          {
+ 112   1      if(lowms>=1670)                 //20ms计时
+ 113   1      {
+ 114   2        i=0;
+ 115   2        ds=0;
+ 116   2        lowms=0;
+ 117   2        P32=0;
+C51 COMPILER V9.59.0.0   MAIN                                                              02/05/2020 20:05:59 PAGE 3   
+
+ 118   2        P33=0;
+ 119   2        P34=0;
+ 120   2      }
+ 121   1      lowms++;
+ 122   1      
+ 123   1      
+ 124   1      if(ds<=40)
+ 125   1      {
+ 126   2      P34=1;
+ 127   2      P33=1;
+ 128   2      P32=1;
+ 129   2      }
+ 130   1      if(ds>40)
+ 131   1      {
+ 132   2      if(i<=sevr[0])                 //舵机1角度数据
+ 133   2      {
+ 134   3        P34=1;
+ 135   3      }
+ 136   2      else
+ 137   2      {
+ 138   3      P34=0;
+ 139   3      }
+ 140   2      
+ 141   2      
+ 142   2      if(i<=sevr[1])                 //舵机2角度数据
+ 143   2      {
+ 144   3        P33=1;
+ 145   3      }
+ 146   2      else
+ 147   2      {
+ 148   3      P33=0;
+ 149   3      }
+ 150   2      
+ 151   2      
+ 152   2      
+ 153   2      if(i<=sevr[2])                 //舵机3角度数据
+ 154   2      {
+ 155   3        P32=1;
+ 156   3      }
+ 157   2      else
+ 158   2      {
+ 159   3      P32=0;
+ 160   3      }
+ 161   2      i++;}
+ 162   1      ds++;
+ 163   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    761    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     76    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

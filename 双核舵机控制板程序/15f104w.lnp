@@ -1,0 +1,5 @@
+"STARTUP.obj",
+"main.obj",
+"softuart.obj",
+"translate.obj" 
+TO "15f104w" 
